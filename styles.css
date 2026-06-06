@@ -498,10 +498,10 @@ h3.sub-heading.with-bar::after {
 .chip-blue { background: #6FA7D9; }
 .chip-lightblue { background: #B3D9F2; }
 .chip-red { background: #D9534F; }
-.chip-darkpurple { background: #5E3A82; }
+.chip-burgundy { background: var(--burgundy); }
 .chip-purple { background: #9168C4; }
 .chip-yellow { background: #F4D35E; }
-.chip-orange { background: #E58B4A; }
+.chip-brown { background: #8B5A3C; }
 .chip-grey { background: #B5B5B5; }
 .chip-pink { background: var(--pink); }
 
