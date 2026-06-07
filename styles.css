@@ -713,11 +713,23 @@ h3.sub-heading.with-bar::after {
 }
 
 /* ---------- HUDDLE / FORM TABLE ---------- */
+.huddle-scroll {
+  width: 100%;
+  margin-top: 10px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Bleed slightly past the page padding so the scrollbar/edge feel natural */
+  margin-left: -8px;
+  margin-right: -8px;
+  padding: 0 8px 6px;
+}
+
 .huddle-table {
   width: 100%;
+  min-width: 920px; /* let it scroll on iPhone portrait instead of squishing */
   border-collapse: collapse;
   font-size: 11px;
-  margin-top: 10px;
+  margin-top: 0;
 }
 
 .huddle-table th,
@@ -1127,6 +1139,7 @@ textarea.sop-text {
   width: 320px;
   max-width: 86vw;
   height: 100vh;
+  height: 100dvh; /* shrinks below Safari's bottom URL bar on iPhone */
   background: var(--paper);
   border-right: 1px solid rgba(102, 44, 57, 0.15);
   box-shadow: 12px 0 40px -16px rgba(51, 12, 21, 0.35);
@@ -1215,7 +1228,7 @@ textarea.sop-text {
 .sop-drawer-nav {
   flex: 1;
   overflow-y: auto;
-  padding: 10px 14px 20px;
+  padding: 10px 14px calc(env(safe-area-inset-bottom, 0px) + 28px);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -1874,6 +1887,16 @@ body.sop-drawer-open {
   .cell-picker-backdrop,
   .cell-picker {
     display: none !important;
+  }
+
+  .huddle-scroll {
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .huddle-table {
+    min-width: 0 !important;
   }
 
   .pencil-layer {
