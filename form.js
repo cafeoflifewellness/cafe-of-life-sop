@@ -567,12 +567,44 @@
 
   // Pay cycle: blank → card → cash → PIF → owes → blank
   const PAY_STATES = [
-    { key: 0, icon: '',   label: 'Not set' },
-    { key: 1, icon: '💳', label: 'Card auto-debited' },
-    { key: 2, icon: '💵', label: 'Cash / check' },
-    { key: 3, icon: '⊘',  label: 'PIF — paid in full today' },
-    { key: 4, icon: '⚠',  label: 'Owes balance' }
+    { key: 0, icon: '',   short: '',     full: 'Not set' },
+    { key: 1, icon: '💳', short: 'Card', full: 'Card auto-debited' },
+    { key: 2, icon: '💵', short: 'Cash', full: 'Cash / check' },
+    { key: 3, icon: '⊘',  short: 'PIF',  full: 'PIF — paid in full today' },
+    { key: 4, icon: '⚠',  short: 'Owes', full: 'Owes balance' }
   ];
+
+  function buildTimeSlots() {
+    const slots = [];
+    for (let h = 6; h <= 20; h++) {
+      for (let m = 0; m < 60; m += 15) {
+        if (h === 20 && m > 0) break;
+        const hh = h % 12 || 12;
+        const ampm = h < 12 ? 'AM' : 'PM';
+        const mm = m === 0 ? '00' : String(m);
+        slots.push(hh + ':' + mm + ' ' + ampm);
+      }
+    }
+    return slots;
+  }
+  const TIME_SLOTS = buildTimeSlots();
+  const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function formatDateShort(dateStr) {
+    if (!dateStr) return '';
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+    if (!m) return dateStr;
+    const y = +m[1], mo = +m[2], d = +m[3];
+    const thisYear = new Date().getFullYear();
+    return MONTHS_SHORT[mo - 1] + ' ' + d + (y === thisYear ? '' : ', ' + y);
+  }
+  function formatNextAppt(obj) {
+    if (!obj) return '';
+    const parts = [];
+    if (obj.date) parts.push(formatDateShort(obj.date));
+    if (obj.time) parts.push(obj.time);
+    return parts.join(' · ');
+  }
 
   function applyApptToButton(btn, apptKey) {
     btn.innerHTML = '';
@@ -612,10 +644,26 @@
 
   function applyPayState(btn, stateIdx) {
     const s = PAY_STATES[stateIdx] || PAY_STATES[0];
-    btn.textContent = s.icon;
-    btn.title = s.label;
+    if (s.icon) {
+      btn.innerHTML =
+        '<span class="pay-icon">' + s.icon + '</span>' +
+        '<span class="pay-label">' + s.short + '</span>';
+    } else {
+      btn.innerHTML = '';
+    }
+    btn.title = s.full;
     btn.classList.remove('state-1', 'state-2', 'state-3', 'state-4');
     if (stateIdx > 0) btn.classList.add('state-' + stateIdx);
+  }
+
+  function applyTimeToButton(btn, timeStr) {
+    btn.textContent = timeStr || '';
+    btn.classList.toggle('is-empty', !timeStr);
+  }
+  function applyNextApptToButton(btn, obj) {
+    const text = formatNextAppt(obj);
+    btn.textContent = text;
+    btn.classList.toggle('is-empty', !text);
   }
 
   let pickerEls = null;
@@ -706,11 +754,206 @@
     if (btn) applyPayState(btn, stateIdx);
   }
 
+  function setRowTime(rowIdx, timeStr) {
+    state['huddle_time_' + rowIdx] = timeStr || '';
+    scheduleSave();
+    const btn = document.querySelector('.time-btn[data-row="' + rowIdx + '"]');
+    if (btn) applyTimeToButton(btn, timeStr);
+  }
+
+  function setRowNextAppt(rowIdx, obj) {
+    state['huddle_nextappt_' + rowIdx] = obj || null;
+    scheduleSave();
+    const btn = document.querySelector('.nextappt-btn[data-row="' + rowIdx + '"]');
+    if (btn) applyNextApptToButton(btn, obj);
+  }
+
+  // ---- Time picker modal ----
+  let timePickerEls = null;
+  function buildTimePicker() {
+    if (timePickerEls) return timePickerEls;
+    const backdrop = document.createElement('div');
+    backdrop.className = 'cell-picker-backdrop time-picker-backdrop';
+    const modal = document.createElement('div');
+    modal.className = 'cell-picker time-picker';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-label', 'Pick time');
+
+    let gridHtml = '';
+    TIME_SLOTS.forEach(t => {
+      gridHtml += '<button type="button" class="time-pick" data-time="' + t + '">' + t + '</button>';
+    });
+
+    modal.innerHTML =
+      '<header class="cell-picker-head">' +
+        '<h3>Pick time</h3>' +
+        '<button type="button" class="cell-picker-close" aria-label="Close">✕</button>' +
+      '</header>' +
+      '<div class="time-picker-grid">' + gridHtml + '</div>' +
+      '<button type="button" class="cell-picker-clear">Clear time</button>';
+
+    document.body.appendChild(backdrop);
+    document.body.appendChild(modal);
+
+    timePickerEls = { backdrop, modal, currentRow: null };
+    function close() {
+      modal.classList.remove('open');
+      backdrop.classList.remove('open');
+      timePickerEls.currentRow = null;
+    }
+    backdrop.addEventListener('click', close);
+    modal.querySelector('.cell-picker-close').addEventListener('click', close);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('open')) close();
+    });
+    modal.querySelectorAll('.time-pick').forEach(b => {
+      b.addEventListener('click', () => {
+        if (timePickerEls.currentRow == null) return close();
+        setRowTime(timePickerEls.currentRow, b.dataset.time);
+        close();
+      });
+    });
+    modal.querySelector('.cell-picker-clear').addEventListener('click', () => {
+      if (timePickerEls.currentRow == null) return close();
+      setRowTime(timePickerEls.currentRow, '');
+      close();
+    });
+
+    timePickerEls.open = (rowIdx) => {
+      timePickerEls.currentRow = rowIdx;
+      backdrop.classList.add('open');
+      modal.classList.add('open');
+      const saved = state['huddle_time_' + rowIdx] || '';
+      modal.querySelectorAll('.time-pick').forEach(b => {
+        b.classList.toggle('selected', b.dataset.time === saved);
+      });
+      const sel = modal.querySelector('.time-pick.selected');
+      if (sel) {
+        setTimeout(() => sel.scrollIntoView({ block: 'center', behavior: 'instant' }), 0);
+      }
+    };
+    return timePickerEls;
+  }
+
+  // ---- Next-appt picker (native date + time grid) ----
+  let nextApptPickerEls = null;
+  function buildNextApptPicker() {
+    if (nextApptPickerEls) return nextApptPickerEls;
+    const backdrop = document.createElement('div');
+    backdrop.className = 'cell-picker-backdrop nextappt-picker-backdrop';
+    const modal = document.createElement('div');
+    modal.className = 'cell-picker nextappt-picker';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-label', 'Pick next appointment');
+
+    let gridHtml = '';
+    TIME_SLOTS.forEach(t => {
+      gridHtml += '<button type="button" class="time-pick" data-time="' + t + '">' + t + '</button>';
+    });
+
+    modal.innerHTML =
+      '<header class="cell-picker-head">' +
+        '<h3>Pick next appt</h3>' +
+        '<button type="button" class="cell-picker-close" aria-label="Close">✕</button>' +
+      '</header>' +
+      '<div class="nextappt-date-row">' +
+        '<label for="nextappt-date-input">Date</label>' +
+        '<input id="nextappt-date-input" type="date" class="nextappt-date-input">' +
+      '</div>' +
+      '<div class="nextappt-time-label">Time <span>(tap to confirm)</span></div>' +
+      '<div class="time-picker-grid">' + gridHtml + '</div>' +
+      '<button type="button" class="cell-picker-clear">Clear next appt</button>';
+
+    document.body.appendChild(backdrop);
+    document.body.appendChild(modal);
+    const dateInput = modal.querySelector('.nextappt-date-input');
+
+    nextApptPickerEls = { backdrop, modal, dateInput, currentRow: null };
+
+    function close() {
+      modal.classList.remove('open');
+      backdrop.classList.remove('open');
+      nextApptPickerEls.currentRow = null;
+    }
+    backdrop.addEventListener('click', close);
+    modal.querySelector('.cell-picker-close').addEventListener('click', close);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('open')) close();
+    });
+    dateInput.addEventListener('input', () => {
+      if (nextApptPickerEls.currentRow == null) return;
+      const current = state['huddle_nextappt_' + nextApptPickerEls.currentRow] || {};
+      setRowNextAppt(nextApptPickerEls.currentRow, {
+        date: dateInput.value,
+        time: current.time || ''
+      });
+    });
+    modal.querySelectorAll('.time-pick').forEach(b => {
+      b.addEventListener('click', () => {
+        if (nextApptPickerEls.currentRow == null) return close();
+        setRowNextAppt(nextApptPickerEls.currentRow, {
+          date: dateInput.value || '',
+          time: b.dataset.time
+        });
+        close();
+      });
+    });
+    modal.querySelector('.cell-picker-clear').addEventListener('click', () => {
+      if (nextApptPickerEls.currentRow == null) return close();
+      setRowNextAppt(nextApptPickerEls.currentRow, null);
+      dateInput.value = '';
+      close();
+    });
+
+    nextApptPickerEls.open = (rowIdx) => {
+      nextApptPickerEls.currentRow = rowIdx;
+      const saved = state['huddle_nextappt_' + rowIdx] || {};
+      dateInput.value = saved.date || '';
+      backdrop.classList.add('open');
+      modal.classList.add('open');
+      modal.querySelectorAll('.time-pick').forEach(b => {
+        b.classList.toggle('selected', b.dataset.time === (saved.time || ''));
+      });
+      const sel = modal.querySelector('.time-pick.selected');
+      if (sel) {
+        setTimeout(() => sel.scrollIntoView({ block: 'center', behavior: 'instant' }), 0);
+      }
+    };
+    return nextApptPickerEls;
+  }
+
+  function huddleRowHTML(i) {
+    return (
+      '<tr>' +
+        '<td class="input-cell"><input class="sop-text cell-input" name="huddle_patient_' + i + '" type="text" autocomplete="off" enterkeyhint="next" aria-label="Patient name row ' + (i + 1) + '"></td>' +
+        '<td class="time-cell"><button class="time-btn cell-btn is-empty" type="button" data-row="' + i + '" aria-label="Pick time"></button></td>' +
+        '<td class="appt-cell"><button class="appt-type-btn is-empty" type="button" data-row="' + i + '" aria-label="Pick appointment type"></button></td>' +
+        '<td class="charge-cell" data-row="' + i + '"></td>' +
+        '<td class="input-cell"><input class="sop-text cell-input cell-input-num" name="huddle_card_' + i + '" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="" aria-label="Card last 4 row ' + (i + 1) + '"></td>' +
+        '<td class="pay-cell"><button class="pay-btn cell-btn" type="button" data-row="' + i + '" aria-label="Cycle payment state"></button></td>' +
+        '<td class="nextappt-cell"><button class="nextappt-btn cell-btn is-empty" type="button" data-row="' + i + '" aria-label="Pick next appointment"></button></td>' +
+        '<td class="input-cell"><input class="sop-text cell-input" name="huddle_notes_' + i + '" type="text" autocomplete="off" aria-label="Notes row ' + (i + 1) + '"></td>' +
+      '</tr>'
+    );
+  }
+
+  function prepareHuddleRows() {
+    if (PAGE_FILE !== HUDDLE_PAGE) return;
+    const tbody = document.querySelector('tbody[data-huddle-rows]');
+    if (!tbody || tbody.children.length) return;
+    const n = +tbody.dataset.huddleRows || 15;
+    let html = '';
+    for (let i = 0; i < n; i++) html += huddleRowHTML(i);
+    tbody.innerHTML = html;
+  }
+
   function initHuddle() {
     if (PAGE_FILE !== HUDDLE_PAGE) return;
     const table = document.querySelector('table[data-huddle="true"]');
     if (!table) return;
     buildPicker();
+    buildTimePicker();
+    buildNextApptPicker();
 
     table.querySelectorAll('.appt-type-btn').forEach(btn => {
       const row = +btn.dataset.row;
@@ -722,6 +965,28 @@
         e.preventDefault();
         e.stopPropagation();
         pickerEls.open(row);
+      });
+    });
+
+    table.querySelectorAll('.time-btn').forEach(btn => {
+      const row = +btn.dataset.row;
+      const saved = state['huddle_time_' + row] || '';
+      applyTimeToButton(btn, saved);
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        timePickerEls.open(row);
+      });
+    });
+
+    table.querySelectorAll('.nextappt-btn').forEach(btn => {
+      const row = +btn.dataset.row;
+      const saved = state['huddle_nextappt_' + row] || null;
+      applyNextApptToButton(btn, saved);
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        nextApptPickerEls.open(row);
       });
     });
 
@@ -784,6 +1049,8 @@
   function init() {
     if (ensureNoteRouted()) return;
     blockStylusScroll();
+    // Huddle rows must exist before initInputs binds their text fields
+    prepareHuddleRows();
     // Order matters: restore contenteditable text first, THEN inject checkboxes
     initEditables();
     initCheckboxes();

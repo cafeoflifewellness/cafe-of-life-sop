@@ -1378,9 +1378,90 @@ body.sop-drawer-open {
    =========================================================== */
 .huddle-table td.appt-cell,
 .huddle-table td.charge-cell,
-.huddle-table td.pay-cell {
+.huddle-table td.pay-cell,
+.huddle-table td.time-cell,
+.huddle-table td.nextappt-cell,
+.huddle-table td.input-cell {
   padding: 0;
   position: relative;
+}
+
+.huddle-table input.cell-input {
+  width: 100%;
+  height: 100%;
+  min-height: 40px;
+  border: none;
+  background: transparent;
+  padding: 4px 8px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  outline: none;
+  box-shadow: none;
+}
+
+.huddle-table input.cell-input:focus {
+  background: rgba(255, 197, 211, 0.22);
+  box-shadow: inset 0 0 0 1.5px var(--burgundy);
+}
+
+.huddle-table input.cell-input-num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Shared tap-button base (time, nextappt, pay) */
+.huddle-table .cell-btn {
+  width: 100%;
+  height: 100%;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--plum);
+  text-align: center;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+}
+
+.huddle-table .time-btn,
+.huddle-table .nextappt-btn {
+  text-align: left;
+  justify-content: flex-start;
+}
+
+.huddle-table .time-btn {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.huddle-table .nextappt-btn {
+  font-size: 12px;
+}
+
+.huddle-table .cell-btn.is-empty::before {
+  content: "—";
+  color: rgba(102, 44, 57, 0.28);
+  font-weight: 500;
+}
+
+.huddle-table .cell-btn:hover {
+  background: rgba(255, 197, 211, 0.18);
+}
+
+.huddle-table .cell-btn:active {
+  background: rgba(255, 197, 211, 0.35);
 }
 
 /* Appt Type tap target */
@@ -1459,27 +1540,29 @@ body.sop-drawer-open {
   letter-spacing: 0.01em;
 }
 
-/* Pay tap-cycle */
+/* Pay tap-cycle — overrides .cell-btn defaults for icon+label */
 .pay-btn {
-  width: 100%;
-  height: 100%;
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 18px;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--plum);
+}
+
+.pay-btn .pay-icon {
+  font-size: 15px;
   line-height: 1;
 }
 
-.pay-btn:hover {
-  background: rgba(255, 197, 211, 0.18);
+.pay-btn .pay-label {
+  font-size: 12px;
+  font-weight: 700;
 }
 
-.pay-btn:active {
-  background: rgba(255, 197, 211, 0.35);
+.pay-btn:empty::before {
+  content: "—";
+  color: rgba(102, 44, 57, 0.28);
+  font-weight: 500;
 }
 
 .pay-btn.state-1 { background: rgba(106, 191, 122, 0.16); }   /* card */
@@ -1490,7 +1573,8 @@ body.sop-drawer-open {
 /* ===========================================================
    APPT TYPE PICKER MODAL
    =========================================================== */
-.appt-picker-backdrop {
+.appt-picker-backdrop,
+.cell-picker-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(51, 12, 21, 0.45);
@@ -1500,18 +1584,20 @@ body.sop-drawer-open {
   z-index: 1100;
 }
 
-.appt-picker-backdrop.open {
+.appt-picker-backdrop.open,
+.cell-picker-backdrop.open {
   opacity: 1;
   pointer-events: auto;
 }
 
-.appt-picker {
+.appt-picker,
+.cell-picker {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) scale(0.96);
-  width: min(92vw, 520px);
-  max-height: 80vh;
+  width: min(92vw, 560px);
+  max-height: 82vh;
   overflow-y: auto;
   background: var(--paper);
   border-radius: 14px;
@@ -1524,13 +1610,15 @@ body.sop-drawer-open {
   -webkit-overflow-scrolling: touch;
 }
 
-.appt-picker.open {
+.appt-picker.open,
+.cell-picker.open {
   opacity: 1;
   pointer-events: auto;
   transform: translate(-50%, -50%) scale(1);
 }
 
-.appt-picker-head {
+.appt-picker-head,
+.cell-picker-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1538,7 +1626,8 @@ body.sop-drawer-open {
   margin-bottom: 12px;
 }
 
-.appt-picker-head h3 {
+.appt-picker-head h3,
+.cell-picker-head h3 {
   margin: 0;
   font-family: var(--serif);
   font-size: 20px;
@@ -1547,7 +1636,8 @@ body.sop-drawer-open {
   letter-spacing: 0.01em;
 }
 
-.appt-picker-close {
+.appt-picker-close,
+.cell-picker-close {
   width: 30px;
   height: 30px;
   border-radius: 50%;
@@ -1562,10 +1652,122 @@ body.sop-drawer-open {
   line-height: 1;
 }
 
-.appt-picker-close:hover {
+.appt-picker-close:hover,
+.cell-picker-close:hover {
   background: var(--burgundy);
   color: #fff;
   border-color: var(--burgundy);
+}
+
+/* ===========================================================
+   TIME PICKER + NEXT-APPT PICKER
+   =========================================================== */
+.time-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.time-pick {
+  padding: 9px 6px;
+  background: var(--pink-soft, rgba(255, 197, 211, 0.18));
+  border: 1px solid rgba(102, 44, 57, 0.15);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--plum);
+  letter-spacing: 0.01em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  transition: background 0.1s ease, border-color 0.1s ease, transform 0.08s ease;
+}
+
+.time-pick:hover {
+  background: rgba(255, 197, 211, 0.45);
+  border-color: var(--burgundy);
+}
+
+.time-pick:active {
+  transform: scale(0.97);
+}
+
+.time-pick.selected {
+  background: var(--burgundy);
+  color: #fff;
+  border-color: var(--burgundy);
+}
+
+.cell-picker-clear {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1.5px dashed rgba(102, 44, 57, 0.35);
+  border-radius: 10px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--burgundy);
+  cursor: pointer;
+}
+
+.cell-picker-clear:hover {
+  background: var(--burgundy);
+  color: #fff;
+  border-style: solid;
+}
+
+.nextappt-date-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  background: rgba(255, 197, 211, 0.12);
+  border: 1px solid rgba(102, 44, 57, 0.15);
+  border-radius: 10px;
+}
+
+.nextappt-date-row label {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--burgundy);
+  flex-shrink: 0;
+}
+
+.nextappt-date-input {
+  flex: 1;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--plum);
+  background: var(--paper);
+  border: 1px solid rgba(102, 44, 57, 0.25);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.nextappt-time-label {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--burgundy);
+  margin: 6px 0 8px;
+}
+
+.nextappt-time-label span {
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--rose);
 }
 
 .appt-picker-grid {
@@ -1668,7 +1870,9 @@ body.sop-drawer-open {
   .sop-backdrop,
   .sop-drawer,
   .appt-picker-backdrop,
-  .appt-picker {
+  .appt-picker,
+  .cell-picker-backdrop,
+  .cell-picker {
     display: none !important;
   }
 
