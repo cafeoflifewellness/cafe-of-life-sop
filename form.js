@@ -632,10 +632,14 @@
   }
 
   function applyChargeGhost(cell, apptKey) {
-    const input = cell.querySelector('input.cell-input');
-    if (!input) return;
-    const type = apptKey ? APPT_BY_KEY[apptKey] : null;
-    input.placeholder = (type && type.charge != null) ? '$' + type.charge : '';
+    cell.innerHTML = '';
+    if (!apptKey) return;
+    const type = APPT_BY_KEY[apptKey];
+    if (!type || type.charge == null) return;
+    const ghost = document.createElement('span');
+    ghost.className = 'charge-ghost';
+    ghost.textContent = '$' + type.charge;
+    cell.appendChild(ghost);
   }
 
   function applyPayState(btn, stateIdx) {
@@ -924,7 +928,7 @@
         '<td class="input-cell"><input class="sop-text cell-input" name="huddle_patient_' + i + '" type="text" autocomplete="off" enterkeyhint="next" aria-label="Patient name row ' + (i + 1) + '"></td>' +
         '<td class="time-cell"><button class="time-btn cell-btn is-empty" type="button" data-row="' + i + '" aria-label="Pick time"></button></td>' +
         '<td class="appt-cell"><button class="appt-type-btn is-empty" type="button" data-row="' + i + '" aria-label="Pick appointment type"></button></td>' +
-        '<td class="charge-cell input-cell" data-row="' + i + '"><input class="sop-text cell-input cell-input-num" name="huddle_charge_' + i + '" type="text" inputmode="decimal" autocomplete="off" aria-label="Charge row ' + (i + 1) + '"></td>' +
+        '<td class="charge-cell" data-row="' + i + '"></td>' +
         '<td class="input-cell"><input class="sop-text cell-input cell-input-num" name="huddle_card_' + i + '" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="" aria-label="Card last 4 row ' + (i + 1) + '"></td>' +
         '<td class="pay-cell"><button class="pay-btn cell-btn" type="button" data-row="' + i + '" aria-label="Cycle payment state"></button></td>' +
         '<td class="nextappt-cell"><button class="nextappt-btn cell-btn is-empty" type="button" data-row="' + i + '" aria-label="Pick next appointment"></button></td>' +
