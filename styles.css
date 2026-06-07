@@ -1413,6 +1413,12 @@ body.sop-drawer-open {
   font-weight: 600;
 }
 
+.huddle-table input.cell-input::placeholder {
+  color: rgba(102, 44, 57, 0.38);
+  font-weight: 600;
+  opacity: 1;
+}
+
 /* Shared tap-button base (time, nextappt, pay) */
 .huddle-table .cell-btn {
   width: 100%;
