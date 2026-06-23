@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>15 &middot; Vale Command Center &middot; Café of Life SOP</title>
+<link rel="stylesheet" href="styles.css">
+
+<style>
+  .command-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin: 18px 0;
+  }
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+
+  .command-box {
+    background: #fff;
+    border: 1px solid rgba(139, 58, 98, 0.22);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 8px 20px rgba(139, 58, 98, 0.08);
+  }
+
+  .command-box h3 {
+    margin-top: 0;
+    color: var(--burgundy);
+  }
+
+  .patient-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .patient-table th,
+  .patient-table td {
+    border-bottom: 1px solid rgba(139, 58, 98, 0.16);
+    padding: 8px;
+    text-align: left;
+  }
+
+  .patient-table th {
+    color: var(--burgundy);
+    font-weight: 700;
+  }
+
+  input, textarea, select {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid rgba(139, 58, 98, 0.25);
+    border-radius: 10px;
+    padding: 7px;
+    font-family: inherit;
+    font-size: 13px;
+    background: #fffdfd;
+  }
+
+  textarea {
+    min-height: 90px;
+    resize: vertical;
+  }
+
+  .tiny-check {
+    width: auto;
+    transform: scale(1.15);
+  }
+
+  .button-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 14px 0;
+  }
+
+  .mini-button {
+    border: none;
+    border-radius: 999px;
+    padding: 9px 15px;
+    background: var(--burgundy);
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .mini-button.secondary {
+    background: #c77b9d;
+  }
+
+  .quick-links-command a {
+    display: inline-block;
+    margin: 5px 6px 5px 0;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #f8e6ee;
+    color: var(--burgundy);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  @media (max-width: 800px) {
+    .command-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<nav class="topnav">
+  <span class="brand">&#127800; Café of Life &middot; SOP</span>
+  <span class="nav-links">
+    <a href="index.html">Contents</a>
+    <a href="14-notes.html">&lsaquo; Prev</a>
+  </span>
+</nav>
+
+<section class="page">
+  <header class="page-header">
+    <span class="eyebrow">Section 15</span>
+    <h1>Vale Command Center</h1>
+    <p class="subtitle">Live solo-shift workspace &middot; huddle &middot; patient tracker &middot; notes &middot; end-of-day sweep</p>
+    <span class="flourish"></span>
+  </header>
+
+  <div class="callout warn">
+    <span class="label">&#9888; Main Rule</span>
+    This page is for tracking what is still open during the day. If a patient is not marked DONE, something still needs attention.
+  </div>
+
+  <div class="command-grid">
+
+    <div class="command-box">
+      <h3>&#9728; Start of Shift</h3>
+      <ul class="checklist">
+        <li><label><input class="tiny-check save-check" type="checkbox"> Voicemail checked</label></li>
+        <li><label><input class="tiny-check save-check" type="checkbox"> Review Wave checked</label></li>
+        <li><label><input class="tiny-check save-check" type="checkbox"> Email checked</label></li>
+        <li><label><input class="tiny-check save-check" type="checkbox"> Cash Practice import done</label></li>
+        <li><label><input class="tiny-check save-check" type="checkbox"> CT schedule reviewed</label></li>
+        <li><label><input class="tiny-check save-check" type="checkbox"> NP / ROF / SW / Re-exams reviewed</label></li>
+      </ul>
+    </div>
+
+    <div class="command-box">
+      <h3>&#128204; Today’s Focus</h3>
+      <textarea id="todayFocus" placeholder="Example: Watch ROF patient, call back missed NP, check SoftWave deposit, ask Dr. Jen about balance..."></textarea>
+    </div>
+
+    <div class="command-box full-width">
+      <h3>&#128101; Patient-by-Patient Tracker</h3>
+      <p style="font-size:14px; color:var(--burgundy); margin-top:-6px;">
+        Use this during huddle and keep updating it during the day.
+      </p>
+
+      <table class="patient-table" id="patientTable">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Patient</th>
+            <th>Type</th>
+            <th>$</th>
+            <th>Next</th>
+            <th>Done</th>
+            <th>Notes / Next Action</th>
+          </tr>
+        </thead>
+        <tbody id="patientRows"></tbody>
+      </table>
+
+      <div class="button-row">
+        <button class="mini-button" onclick="addPatientRow()">+ Add Patient</button>
+        <button class="mini-button secondary" onclick="clearCommandCenter()">Clear Day</button>
+      </div>
+    </div>
+
+    <div class="command-box">
+      <h3>&#128222; Callbacks</h3>
+      <textarea id="callbacks" placeholder="Who needs a call back? Why? When?"></textarea>
+    </div>
+
+    <div class="command-box">
+      <h3>&#128105;&#8205;&#9877; Waiting on Doctor</h3>
+      <textarea id="waitingDoctor" placeholder="Questions for Dr. Jen / Dr. Lily / billing / care plan / patient question..."></textarea>
+    </div>
+
+    <div class="command-box">
+      <h3>&#128221; Review Wave / Forms</h3>
+      <textarea id="formsNotes" placeholder="Forms not linked, NP forms missing, contact needs to be created, intake pending..."></textarea>
+    </div>
+
+    <div class="command-box">
+      <h3>&#128179; Cash Practice / Money Issues</h3>
+      <textarea id="moneyNotes" placeholder="Declines, balance questions, deposits, auto-debit, ledger issue..."></textarea>
+    </div>
+
+    <div class="command-box full-width">
+      <h3>&#9989; Before ANY Patient Leaves</h3>
+      <ul class="checklist">
+        <li>Payment handled</li>
+        <li>Ledger checked</li>
+        <li>Balance checked</li>
+        <li>Alerts checked</li>
+        <li>Next appointment scheduled</li>
+        <li>Date and time said out loud</li>
+        <li>Receipt signed, scanned, then shredded if applicable</li>
+        <li>Notes / red-letter action items completed</li>
+      </ul>
+    </div>
+
+    <div class="command-box full-width">
+      <h3>&#127769; End-of-Day Sweep</h3>
+      <ul class="checklist">
+        <li><label><input class="tiny-check save-check" type="checkbox"> Every patient from today reviewed</label></li>
+        <li><label><input class="tiny-check save-check" type="checkbox"> Payments handled</label></li>
+        <li><label><input class="tiny-check save-check" type="checkbox"> Next appointments scheduled</label></li>
+        <li><label><input class="tiny-check save-check" type="checkbox"> Receipts scanned / shredded</label></li>
+        <li><label><input class="tiny-check save-check" type="checkbox"> Review Wave clear</label></li>
+        <li><label><input class="tiny-check save-check" type="checkbox"> Voicemail clear</label></li>
+        <li><label><input class="tiny-check save-check" type="checkbox"> Email checked</label></li>
+        <li><label><input class="tiny-check save-check" type="checkbox"> Money report / cash log handled</label></li>
+        <li><label><input class="tiny-check save-check" type="checkbox"> Tomorrow NP / ROF / SW checked</label></li>
+      </ul>
+    </div>
+
+    <div class="command-box full-width">
+      <h3>&#128279; SOP Quick Links</h3>
+      <div class="quick-links-command">
+        <a href="02-np-call.html">NP Phone Call</a>
+        <a href="03-day-1.html">NP Day 1</a>
+        <a href="04-day-2-rof.html">ROF</a>
+        <a href="05-day-3.html">Day 3</a>
+        <a href="08-softwave.html">SoftWave</a>
+        <a href="09-checkout.html">Checkout</a>
+        <a href="10-closing.html">Closing</a>
+        <a href="12-rules-colors.html">Rules / Colors</a>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="page-footer">
+    <a class="nav-link-back" href="14-notes.html">&lsaquo; Notes</a>
+    <span class="page-num">15 &middot; Command Center</span>
+    <a href="index.html">Contents &rsaquo;</a>
+  </div>
+</section>
+
+<script>
+const STORAGE_KEY = "valeCommandCenter";
+
+function getPatientRowHTML(data = {}) {
+  return `
+    <tr>
+      <td><input class="save-field" type="time" value="${data.time || ""}"></td>
+      <td><input class="save-field" type="text" value="${data.patient || ""}" placeholder="Name"></td>
+      <td>
+        <select class="save-field">
+          <option value="" ${!data.type ? "selected" : ""}>Type</option>
+          <option ${data.type === "Adjustment" ? "selected" : ""}>Adjustment</option>
+          <option ${data.type === "NP" ? "selected" : ""}>NP</option>
+          <option ${data.type === "ROF" ? "selected" : ""}>ROF</option>
+          <option ${data.type === "Day 3" ? "selected" : ""}>Day 3</option>
+          <option ${data.type === "SoftWave" ? "selected" : ""}>SoftWave</option>
+          <option ${data.type === "Re-Exam" ? "selected" : ""}>Re-Exam</option>
+          <option ${data.type === "Exercise" ? "selected" : ""}>Exercise</option>
+          <option ${data.type === "Wellness" ? "selected" : ""}>Wellness</option>
+        </select>
+      </td>
+      <td style="text-align:center;"><input class="tiny-check save-field" type="checkbox" ${data.paid ? "checked" : ""}></td>
+      <td style="text-align:center;"><input class="tiny-check save-field" type="checkbox" ${data.next ? "checked" : ""}></td>
+      <td style="text-align:center;"><input class="tiny-check save-field" type="checkbox" ${data.done ? "checked" : ""}></td>
+      <td><input class="save-field" type="text" value="${data.notes || ""}" placeholder="Next action / reminder"></td>
+    </tr>
+  `;
+}
+
+function addPatientRow(data = {}) {
+  document.getElementById("patientRows").insertAdjacentHTML("beforeend", getPatientRowHTML(data));
+  attachSaveListeners();
+  saveCommandCenter();
+}
+
+function saveCommandCenter() {
+  const rows = [];
+  document.querySelectorAll("#patientRows tr").forEach(row => {
+    const fields = row.querySelectorAll("input, select");
+    rows.push({
+      time: fields[0].value,
+      patient: fields[1].value,
+      type: fields[2].value,
+      paid: fields[3].checked,
+      next: fields[4].checked,
+      done: fields[5].checked,
+      notes: fields[6].value
+    });
+  });
+
+  const checks = Array.from(document.querySelectorAll(".save-check")).map(cb => cb.checked);
+
+  const data = {
+    todayFocus: document.getElementById("todayFocus").value,
+    callbacks: document.getElementById("callbacks").value,
+    waitingDoctor: document.getElementById("waitingDoctor").value,
+    formsNotes: document.getElementById("formsNotes").value,
+    moneyNotes: document.getElementById("moneyNotes").value,
+    rows,
+    checks
+  };
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function loadCommandCenter() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+
+  if (!saved) {
+    for (let i = 0; i < 10; i++) addPatientRow();
+    return;
+  }
+
+  const data = JSON.parse(saved);
+
+  document.getElementById("todayFocus").value = data.todayFocus || "";
+  document.getElementById("callbacks").value = data.callbacks || "";
+  document.getElementById("waitingDoctor").value = data.waitingDoctor || "";
+  document.getElementById("formsNotes").value = data.formsNotes || "";
+  document.getElementById("moneyNotes").value = data.moneyNotes || "";
+
+  if (data.rows && data.rows.length) {
+    data.rows.forEach(row => addPatientRow(row));
+  } else {
+    for (let i = 0; i < 10; i++) addPatientRow();
+  }
+
+  if (data.checks) {
+    document.querySelectorAll(".save-check").forEach((cb, index) => {
+      cb.checked = data.checks[index] || false;
+    });
+  }
+
+  attachSaveListeners();
+}
+
+function attachSaveListeners() {
+  document.querySelectorAll(".save-field, .save-check, textarea").forEach(el => {
+    el.removeEventListener("input", saveCommandCenter);
+    el.removeEventListener("change", saveCommandCenter);
+    el.addEventListener("input", saveCommandCenter);
+    el.addEventListener("change", saveCommandCenter);
+  });
+}
+
+function clearCommandCenter() {
+  if (confirm("Clear today’s Command Center?")) {
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  }
+}
+
+window.addEventListener("load", loadCommandCenter);
+</script>
+
+</body>
+</html>
